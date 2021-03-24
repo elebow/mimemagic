@@ -54,10 +54,25 @@ class MimeMagic
     }.compact
   end
 
+  def self.database_path
+    possible_paths = [
+      (File.expand_path(ENV["FREEDESKTOP_MIME_TYPES_PATH"]) if ENV["FREEDESKTOP_MIME_TYPES_PATH"]),
+      "#{__dir__}/../../../freedesktop.org.xml",
+      "/usr/local/share/mime/packages/freedesktop.org.xml",
+      "/usr/share/mime/packages/freedesktop.org.xml"
+    ].compact
+
+    possible_paths.find { |candidate| File.exist?(candidate) } || raise(<<~ERROR)
+      Could not find MIME type database in the following locations:
+        #{possible_paths.join(", ")}
+      Ensure you have either installed the shared-mime-types package for your distribution, or
+      obtain a version of freedesktop.org.xml, and set FREEDESKTOP_MIME_TYPES_PATH to the location
+      of that file.
+    ERROR
+  end
+
   def self.open_mime_database
-    require "mimemagic/mimemagic"
-    path = MimeMagic::DATABASE_PATH
-    File.open(path)
+    File.open(database_path)
   end
 
   def self.parse_database
